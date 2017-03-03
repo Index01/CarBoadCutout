@@ -8,7 +8,7 @@ __pycache__/
 *.so
 
 # no accidental vim
-.swp
+*.swp
 
 # Distribution / packaging
 .Python
