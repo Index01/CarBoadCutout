@@ -30,7 +30,7 @@ If you do not have OpenCV installed, turn to page 43 and follow your own adventu
 
 
 
-![alt text] (../static/inContent/capture.png "Running the quick start should produce the depicted results.")
+![alt text] (https://github.com/Index01/CarBoadCutout/blob/master/static/inContent/capture.png "Running the quick start should produce the depicted results.")
 
 
 

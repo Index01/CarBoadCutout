@@ -27,9 +27,9 @@ class StaticVideo(Observer, Observable):
 
         self.capture = cv2.VideoCapture(fullVidName) 
 
+        self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
         self.dThreshLims = {'thresholdFloor': 0, 'threshMax': 255, 'threshAdaptiveMax': 255}
 
-        self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
 
     def __frame_delta_thresh__(self, frame, firstFrame):
         """Accept a frame of video and return a dictionary."""

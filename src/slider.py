@@ -11,6 +11,7 @@ class Slider(Observable):
     """Encapsulate and extend the cv2.trackbar functionality."""
     
     def __init__(self, sliderName, windowName, minVal, maxVal):
+        """Make a nice little slider with a name and everything."""
         self.windowName = windowName
         self.pos = 0
         cv2.createTrackbar(sliderName, self.windowName, minVal, maxVal, self.set_pos)

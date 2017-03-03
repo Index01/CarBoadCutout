@@ -19,12 +19,15 @@ from histoRender import HistoPyPlot
 class VideoContainer():
 
     def __init__(self, inVid):
+        """Early development. Instances can be simplified. I wanted to get it into version control."""
+
         """Create a window and a video player"""
         cv2.namedWindow('ContainerOne', cv2.WINDOW_NORMAL)
         self.player = videoPlayer.StaticVideo(inVid)
         self.firstFrame = None
  
-        """Create some sliders""" 
+        """Create some sliders"""
+        #TODO: Fix the obvious problems. 
         self.thresholdFloorSlider = slider.Slider('ThresFloor-Slider', 'ContainerOne', 0, 255 )
         self.threshFloorSliderObservable = Observable(self.thresholdFloorSlider)
 
@@ -47,7 +50,7 @@ class VideoContainer():
         thresholdFloor = self.thresholdFloorSlider.read_position()
         thresholdMax = self.thresholdMaxSlider.read_position()
         thresholdAdapt = self.thresholdAdaptSlider.read_position()
-            
+        #TODO: Clearly this is funky. Sort it out. 
         self.threshAdaptSliderObservable.update_observers({'thresholdFloor': thresholdFloor, 'threshMax': thresholdMax,
                                                     'threshAdaptiveMax': thresholdAdapt}) 
  
