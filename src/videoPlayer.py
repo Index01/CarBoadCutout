@@ -34,7 +34,6 @@ class StaticVideo(Observer, Observable):
     def __frame_delta_thresh__(self, frame, firstFrame):
         """Accept a frame of video and return a dictionary."""
  
-
         """Filter the frame. Maybe make this a switch later."""
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         #gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -55,8 +54,7 @@ class StaticVideo(Observer, Observable):
         #                               cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 127, 2) 
 
         """Return a dict with frame related info."""
-        threshResp = {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
-        return threshResp
+        return {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
 
 
     def __frame_contour__(self, thresh):
@@ -88,20 +86,22 @@ class StaticVideo(Observer, Observable):
     def update_threshLims(self, dThreshUpdate):
         """Accept a dictionary, if the keys match the threshold limits dictionary keys, update the vals."""
         try: 
-            self.dThreshLims.update({k:v for k,v in dThreshUpdate.iteritems() if self.dThreshLims.has_key(k)})
+            self.dThreshLims.update({k:v for k,v in dThreshUpdate.iteritems() 
+                                                 if self.dThreshLims.has_key(k)})
         except AttributeError, e:
             print 'Not a dictionary, brah. Exception: %s' % e 
-
         return
 
 
     def update(self, dsliderPos):
+        """This is the implementation of the the observer abstract function."""
         self.update_threshLims(dsliderPos)
         return
 
 
     def play(self, firstFrame): 
-    
+        """Here is our main entry point. The video player is given a video name and path at the 
+           time of instantiation. Play only requires a firstFrame so the function can remain stateless.""" 
         ret, frame = self.capture.read()
         frame = imutils.resize(frame, width=1000)
         
@@ -111,24 +111,21 @@ class StaticVideo(Observer, Observable):
         threshFrame = threshFrameDelta['thresh']
         cnts = [] 
         try: 
-            cnts = self.__frame_contour__(threshFrame)
+            """This state can occur on the first time through."""
+            cnts = self.__frame_contour__(threshFrame)   
             self.draw_rect(cnts, frame)
         except ValueError, e: 
             pass
 
         k = cv2.waitKey(30) & 0xff
             
-        dretPlayState = {'ret': ret, 'frame': frame,
-                         'firstFrame': firstFrame,'threshFrame': threshFrame,'cnts': cnts,} 
-        
-        if dretPlayState['ret'] is None: 
+        if ret is None: 
             print "release"
             cap.release()
  
-        return dretPlayState 
-
+        return {'ret': ret, 'frame': frame, 'firstFrame': firstFrame,
+                'threshFrame': threshFrame,'cnts': cnts,} 
        
-
 
 
 
