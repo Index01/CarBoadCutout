@@ -6,8 +6,9 @@ class Observable(object):
         self.observers = []
 
 
-    def register(self, observer): 
-        if not observer in self.observers:
+    def register(self, observer):
+        #TODO: Either convert this to a set, since no duplicate observers, or list comprehension. 
+        if observer not in self.observers:
             self.observers.append(observer)
 
     def unregister(self, observer):
