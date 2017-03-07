@@ -18,8 +18,7 @@ import ntpath
 import imutils
 import cv2
 
-from observer import Observer
-from observable import Observable
+from cutoutMessenger import Observer, Observable
 
 
 class StaticVideo(Observer, Observable):

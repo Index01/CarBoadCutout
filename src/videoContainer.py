@@ -10,7 +10,7 @@ import cv2
 
 import videoPlayer
 import slider
-from observable import Observable
+from cutoutMessenger import Observable
 from histoRender import HistoPyPlot
 
  
