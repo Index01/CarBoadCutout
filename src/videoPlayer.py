@@ -1,11 +1,16 @@
 
+"""Create a VideoPlayer to display and peel off frames of video for further processing.
 
-#__file__ = videoPlayer.py
+Video player objects will allow a static video or video stream to be passed in and the respective objects will serve as an 
+entry point for further computer vision development. VideoPlayer objects have a stream or file name passed to them at the 
+time of creation, allowing us to create several atomic instances of the VideoPlayer.  
+
+TODO: 
+    Define the video stream class.
+    Create shared functions independent of videoPlayer types.
 
 """
-   Video player objects will allow a static video or video stream to be passed in and the respective objects will serve as an 
-   entry point for further computer vision development. 
-"""
+
 
 import numpy as np
 import ntpath
@@ -18,9 +23,25 @@ from observable import Observable
 
 
 class StaticVideo(Observer, Observable):
-    """sBout to get self-ie up in hurrr."""
+    """StaticVideo instances handle locally available video content.
+    
+    A StaticVideo will be created with a video accessible on the os path, no video no StaticVideo instance
+    which intentionaly gives us a 1-to-1 relationship. Module implementations may create N number of 
+    StaticVideo instances, for example allowing some to display color video and others to show filtered frames.   
+  
+    """
    
     def __init__(self, fullVidName):
+        """ Create an instance with a video available on the OS Path
+
+        Module implementations may create multiple instances of StaticVideo players and they can 
+        be synced to show frames at the same time. They must have a video locally available.
+
+        Args:
+            Param1 (str): Relative or absolute path to video file object.
+
+        """
+
         self.fullVidName = fullVidName
         self.vidName = ntpath.basename(fullVidName)
         self.vidPath = ntpath.dirname(fullVidName)
@@ -32,32 +53,55 @@ class StaticVideo(Observer, Observable):
 
 
     def __frame_delta_thresh__(self, frame, firstFrame):
-        """Accept a frame of video and return a dictionary."""
+        """Accept a frame of video and return a dictionary.
+
+        Args:
+            Param1 (): Frame object compatible with OpenCV, [frame].
+            Param2 (): The first frame of the video, or none.
+        
+        Returns:
+            Dictionary of Frame results. 
+
+        """
  
-        """Filter the frame. Maybe make this a switch later."""
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         #gray = cv2.GaussianBlur(gray, (21, 21), 0)
         if firstFrame is None:
-            print "first frame is None!!!"
             firstFrame = gray
-
-        """Calculate the difference between the first, theoretically empty, frame and the most recent."""
-        frameDelta = cv2.absdiff(firstFrame, gray)
- 
-        """Use some CV magic to contrast foreground and background"""
+       
+        # Diff the first and last frame then apply MOG2 algorithm.
+        frameDelta = cv2.absdiff(firstFrame, gray)     
         thresh = self.fgroundBground.apply(gray) 
     
-     
-        """Set a threshold floor then apply adaptive threshold from cv2"""
-        #thresh = cv2.threshold(frameDelta, self.dThreshLims['thresholdFloor'], self.dThreshLims['threshMax'], cv2.THRESH_BINARY)[1]
-        #thresh = cv2.adaptiveThreshold(theFrame, self.dThreshLims['threshAdaptiveMax'], 
-        #                               cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 127, 2) 
+        """20170306 - These may be useful in different lighting, causing problems now
+        Set a threshold floor then apply adaptive threshold from cv2
+        thresh = cv2.threshold(frameDelta, self.dThreshLims['thresholdFloor'], 
+                                           self.dThreshLims['threshMax'], 
+                                           cv2.THRESH_BINARY)[1]
+        thresh = cv2.adaptiveThreshold(thresh, self.dThreshLims['threshAdaptiveMax'], 
+                                                 cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                                 cv2.THRESH_BINARY, 127, 2) 
+        """
 
-        """Return a dict with frame related info."""
+        # Return a dict with frame related info.
         return {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
 
 
     def __frame_contour__(self, thresh):
+        """Accept a thresh from the frame_delta_thresh.
+         
+        Thresh is a openCV frame object, post threshold processing and foreground 
+        separation has occured. The frame_contour mathod wants a nice clean video frame
+        for the highest possible success of identifying contour groups. 
+
+        Args:
+            Param1 (): Frame object compatible with OpenCV, [frame].
+        
+        Returns:
+            List of contour cooidinates. 
+
+        """
+ 
         image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contourResp = []
         #print "contours: %s"  % [cnts for cnts in contours[0]] 
@@ -71,6 +115,17 @@ class StaticVideo(Observer, Observable):
  
 
     def draw_rect(self, cnts, frameName):
+        """Accepts contours and a frame to update, returns None.
+
+        Args:
+            Param1 (): Contours object compatible with OpenCV [contours].
+            Param2 (): Name of the video frame to draw rectangles on.
+        
+        Returns:
+            None if successful. 
+
+        """
+ 
         try:
             x, y, w, h = cv2.boundingRect(cnts)
         except IndexError, e:
@@ -84,7 +139,16 @@ class StaticVideo(Observer, Observable):
 
 
     def update_threshLims(self, dThreshUpdate):
-        """Accept a dictionary, if the keys match the threshold limits dictionary keys, update the vals."""
+        """Accept a dictionary, if the keys match the threshold limits dictionary keys, update the vals.
+
+        Args:
+            Param1 (): Dictionary for threshold vals update.
+        
+        Returns:
+            None if successful. 
+
+        """
+ 
         try: 
             self.dThreshLims.update({k:v for k,v in dThreshUpdate.iteritems() 
                                                  if self.dThreshLims.has_key(k)})
@@ -94,14 +158,36 @@ class StaticVideo(Observer, Observable):
 
 
     def update(self, dsliderPos):
-        """This is the implementation of the the observer abstract function."""
+        """This is the implementation of the the observer abstract function.
+ 
+        The reason this function and the update_threshLims are both here and public
+        is so we can fullfil the abstract contract and update local methods and shown below.
+        If in the future we want to do other things, define another method and call it here.
+        Args:
+            Param1 (dict): Dictionary for threshold vals update.
+        
+        Returns:
+            None if successful. 
+
+        """
+        
         self.update_threshLims(dsliderPos)
         return
 
 
     def play(self, firstFrame): 
-        """Here is our main entry point. The video player is given a video name and path at the 
-           time of instantiation. Play only requires a firstFrame so the function can remain stateless.""" 
+        """Play the video file passed to StaticVideo object at time of creation.
+
+        Here is our main entry point. The video player is given a video name and path at the 
+        time of instantiation. Play only requires a firstFrame so the function can remain stateless. 
+
+        Args:
+            Param1 (): Dictionary for threshold vals update.
+        
+        Returns:
+            None if successful. 
+
+        """
         ret, frame = self.capture.read()
         frame = imutils.resize(frame, width=1000)
         
@@ -111,7 +197,7 @@ class StaticVideo(Observer, Observable):
         threshFrame = threshFrameDelta['thresh']
         cnts = [] 
         try: 
-            """This state can occur on the first time through."""
+            # This state can occur on the first time through.
             cnts = self.__frame_contour__(threshFrame)   
             self.draw_rect(cnts, frame)
         except ValueError, e: 

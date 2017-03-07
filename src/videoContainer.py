@@ -1,11 +1,11 @@
 
-#__file__ = videoContainer.py
 
 """
    Create a VideoContainer instance and for no additional cost you get a NamedWindow, some sliders which are connected to 
    predefined functionality, maybe even a nice little histogram. 
 """
 
+#__file__ = videoContainer.py
 
 
 import cv2
