@@ -33,24 +33,21 @@ class VideoContainer():
         cv2.namedWindow('ContainerOne', cv2.WINDOW_NORMAL)
         self.player = videoPlayer.StaticVideo(inVid)
         self.firstFrame = None
+
+        # Create some Observable instances with respective base classes.
+        self.sliderObservable = Observable(slider)
+        self.videoObservable = Observable(videoPlayer)
  
         #Create some sliders
-        #TODO: Fix the obvious problems. 
         self.thresholdFloorSlider = slider.Slider('ThresFloor-Slider', 'ContainerOne', 0, 255 )
-        self.threshFloorSliderObservable = Observable(self.thresholdFloorSlider)
-
         self.thresholdMaxSlider = slider.Slider('ThresMax-Slider', 'ContainerOne', 0, 255 )
-        self.threshMaxSliderObservable = Observable(self.thresholdMaxSlider)
-
         self.thresholdAdaptSlider = slider.Slider('AdaptiveMax-Slider', 'ContainerOne', 0, 255 )
-        self.threshAdaptSliderObservable = Observable(self.thresholdAdaptSlider)
-
+        self.filterViewSlider = slider.Slider('filterView-Slider', 'ContainerOne', 0, 1)
         self.histogramOne = HistoPyPlot('histoOne','ContainerOne')
-        self.videoObservable = Observable(self.player)
- 
+
         #Register some observers 
-        self.threshAdaptSliderObservable.register(self.player)
-        #self.videoObservable.register(histogramOne)
+        self.sliderObservable.register(self.player)    #I'm registering these with the instance for now.
+        self.videoObservable.register(self.histogramOne)
 
  
     def run_video(self):
@@ -69,10 +66,11 @@ class VideoContainer():
         thresholdFloor = self.thresholdFloorSlider.read_position()
         thresholdMax = self.thresholdMaxSlider.read_position()
         thresholdAdapt = self.thresholdAdaptSlider.read_position()
-        #TODO: Clearly this is funky. Sort it out. 
-        self.threshAdaptSliderObservable.update_observers({'thresholdFloor': thresholdFloor, 
-                                                           'threshMax': thresholdMax,
-                                                           'threshAdaptiveMax': thresholdAdapt}) 
+        filterView = self.filterViewSlider.read_position()
+        self.sliderObservable.update_observers({'thresholdFloor': thresholdFloor, 
+                                                'threshMax': thresholdMax,
+                                                'threshAdaptiveMax': thresholdAdapt,
+                                                'filterView': filterView}) 
  
         #Here is where the magic happens. Press play and get the frame respons as a dict.
         dplayResp = self.player.play(self.firstFrame) 
@@ -81,16 +79,16 @@ class VideoContainer():
             self.firstFrame = dplayResp['firstFrame']
             threshFrame = dplayResp['threshFrame']
             frame = dplayResp['frame']
+            dispFrame = dplayResp['displayFrame']
         except IndexError, e:
             print "Something missing here, brah. Exception: %s" % e 
 
-        #videoObservable.update_observers({'frameIn': threshFrame})
+        #self.videoObservable.update_observers({'frameIn': threshFrame})
 
         #Finally display some stuff.
-        #cv2.imshow('ContainerOne', threshFrame)    # This is a  total hack. Uncoment to view filter.
-        cv2.imshow('ContainerOne', frame)           # Right now I am switching between frames here.
+        cv2.imshow('ContainerOne', dispFrame)
 
-        """#20170306- Hack again. uncomment for debug print. 
+        """#20170306- This is a total hack. uncomment for debug print. 
         for k,v in dplayResp.iteritems():
             print "key: %s" % k
             print "val: %s" % v

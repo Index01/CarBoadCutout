@@ -44,7 +44,7 @@ class StaticVideo(Observer, Observable):
         self.fullVidName = fullVidName
         self.vidName = ntpath.basename(fullVidName)
         self.vidPath = ntpath.dirname(fullVidName)
-
+        self.camView = 0
         self.capture = cv2.VideoCapture(fullVidName) 
 
         self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
@@ -72,15 +72,15 @@ class StaticVideo(Observer, Observable):
         frameDelta = cv2.absdiff(firstFrame, gray)     
         thresh = self.fgroundBground.apply(gray) 
     
-        """20170306 - These may be useful in different lighting, causing problems now
-        Set a threshold floor then apply adaptive threshold from cv2
+        #20170306 - These may be useful in different lighting, causing problems now
+        #Set a threshold floor then apply adaptive threshold from cv2
         thresh = cv2.threshold(frameDelta, self.dThreshLims['thresholdFloor'], 
                                            self.dThreshLims['threshMax'], 
                                            cv2.THRESH_BINARY)[1]
         thresh = cv2.adaptiveThreshold(thresh, self.dThreshLims['threshAdaptiveMax'], 
                                                  cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
                                                  cv2.THRESH_BINARY, 127, 2) 
-        """
+        
 
         # Return a dict with frame related info.
         return {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
@@ -156,6 +156,18 @@ class StaticVideo(Observer, Observable):
         return
 
 
+    def update_camView(self, dUpdates):
+        """If the filterview is true, switch
+
+        Args: 
+            Param1 (dict): update the camview based on filter flag
+        """
+        try: 
+            self.camView = dUpdates['filterView']
+        except KeyError, e:
+            pass
+
+
     def update(self, dsliderPos):
         """This is the implementation of the the observer abstract function.
  
@@ -171,6 +183,7 @@ class StaticVideo(Observer, Observable):
         """
         
         self.update_threshLims(dsliderPos)
+        self.update_camView(dsliderPos)
         return
 
 
@@ -207,9 +220,14 @@ class StaticVideo(Observer, Observable):
         if ret is None: 
             print "release"
             cap.release()
+
+        if self.camView:
+            dispFrame = threshFrame
+        else:
+            dispFrame = frame
  
         return {'ret': ret, 'frame': frame, 'firstFrame': firstFrame,
-                'threshFrame': threshFrame,'cnts': cnts,} 
+                'threshFrame': threshFrame,'cnts': cnts, 'displayFrame': dispFrame} 
        
 
 
