@@ -20,6 +20,94 @@ import cv2
 
 from cutoutMessenger import Observer, Observable
 
+def frame_delta_thresh(videoPlayer, frame, firstFrame, dThreshLims):
+    """Accept a frame of video and return a dictionary.
+
+    Args:
+        Param1 (): Frame object compatible with OpenCV, [frame].
+        Param2 (): The first frame of the video, or none.
+        Param3 (dict): dThreshLims must contain thresholdFloor, threshMax and threshAdaptiveMax.
+        
+    Returns:
+        Dictionary of Frame results. 
+
+    """
+ 
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #gray = cv2.GaussianBlur(gray, (21, 21), 0)
+    if firstFrame is None:
+        firstFrame = gray
+       
+    # Diff the first and last frame then apply MOG2 algorithm.
+    frameDelta = cv2.absdiff(firstFrame, gray)     
+    thresh = videoPlayer.fgroundBground.apply(gray) 
+    
+    #20170306 - These may be useful in different lighting, causing problems now
+    try:
+        #Set a threshold floor then apply adaptive threshold from cv2
+        thresh = cv2.threshold(frameDelta, dThreshLims['thresholdFloor'], 
+                                           dThreshLims['threshMax'], 
+                                           cv2.THRESH_BINARY)[1]
+        thresh = cv2.adaptiveThreshold(thresh, dThreshLims['threshAdaptiveMax'], 
+                                               cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                               cv2.THRESH_BINARY, 127, 2) 
+    except KeyError, e:
+        print "Missing keys, brah. Exception: %s" % e
+
+    # Return a dict with frame related info.
+    return {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
+
+
+def frame_contour(thresh):
+    """Accept a thresh from the frame_delta_thresh.
+      
+    Thresh is a openCV frame object, post threshold processing and foreground 
+    separation has occured. The frame_contour mathod wants a nice clean video frame
+    for the highest possible success of identifying contour groups. 
+
+    Args:
+        Param1 (): Frame object compatible with OpenCV, [frame].
+        
+    Returns:
+        List of contour cooidinates. 
+
+    """
+ 
+    image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contourResp = []
+    #print "contours: %s"  % [cnts for cnts in contours[0]] 
+    try:
+        area = [cv2.contourArea(c) for c in contours] 
+        maxIndex = np.argmax(area)
+        contourResp = contours[maxIndex]
+    except ValueError, e:
+        raise e 
+    return contourResp
+ 
+
+def draw_rect(cnts, frameName):
+    """Accepts contours and a frame to update, returns None.
+
+    Args:
+        Param1 (): Contours object compatible with OpenCV [contours].
+        Param2 (): Name of the video frame to draw rectangles on.
+        
+    Returns:
+        None if successful. 
+
+    """
+ 
+    try:
+        x, y, w, h = cv2.boundingRect(cnts)
+    except IndexError, e:
+        print "No contours here, brah. Exception: %s" % e
+    except TypeError, e:
+        print "Not a numpy array, brah. ExceptionL %s" % e         
+        
+    cv2.rectangle(frameName,(x,y), (x+w, y+h), (0, 0, 255), 2)
+    cv2.rectangle(frameName, (250, 120), (750, 450), (0, 255, 0), 2)
+    return
+
 
 class StaticVideo(Observer, Observable):
     """StaticVideo instances handle locally available video content.
@@ -49,92 +137,6 @@ class StaticVideo(Observer, Observable):
 
         self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
         self.dThreshLims = {'thresholdFloor': 0, 'threshMax': 255, 'threshAdaptiveMax': 255}
-
-
-    def __frame_delta_thresh__(self, frame, firstFrame):
-        """Accept a frame of video and return a dictionary.
-
-        Args:
-            Param1 (): Frame object compatible with OpenCV, [frame].
-            Param2 (): The first frame of the video, or none.
-        
-        Returns:
-            Dictionary of Frame results. 
-
-        """
- 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #gray = cv2.GaussianBlur(gray, (21, 21), 0)
-        if firstFrame is None:
-            firstFrame = gray
-       
-        # Diff the first and last frame then apply MOG2 algorithm.
-        frameDelta = cv2.absdiff(firstFrame, gray)     
-        thresh = self.fgroundBground.apply(gray) 
-    
-        #20170306 - These may be useful in different lighting, causing problems now
-        #Set a threshold floor then apply adaptive threshold from cv2
-        thresh = cv2.threshold(frameDelta, self.dThreshLims['thresholdFloor'], 
-                                           self.dThreshLims['threshMax'], 
-                                           cv2.THRESH_BINARY)[1]
-        thresh = cv2.adaptiveThreshold(thresh, self.dThreshLims['threshAdaptiveMax'], 
-                                                 cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                                 cv2.THRESH_BINARY, 127, 2) 
-        
-
-        # Return a dict with frame related info.
-        return {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
-
-
-    def __frame_contour__(self, thresh):
-        """Accept a thresh from the frame_delta_thresh.
-         
-        Thresh is a openCV frame object, post threshold processing and foreground 
-        separation has occured. The frame_contour mathod wants a nice clean video frame
-        for the highest possible success of identifying contour groups. 
-
-        Args:
-            Param1 (): Frame object compatible with OpenCV, [frame].
-        
-        Returns:
-            List of contour cooidinates. 
-
-        """
- 
-        image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        contourResp = []
-        #print "contours: %s"  % [cnts for cnts in contours[0]] 
-        try:
-            area = [cv2.contourArea(c) for c in contours] 
-            maxIndex = np.argmax(area)
-            contourResp = contours[maxIndex]
-        except ValueError, e:
-            raise e 
-        return contourResp
- 
-
-    def draw_rect(self, cnts, frameName):
-        """Accepts contours and a frame to update, returns None.
-
-        Args:
-            Param1 (): Contours object compatible with OpenCV [contours].
-            Param2 (): Name of the video frame to draw rectangles on.
-        
-        Returns:
-            None if successful. 
-
-        """
- 
-        try:
-            x, y, w, h = cv2.boundingRect(cnts)
-        except IndexError, e:
-            print "No contours here, brah. Exception: %s" % e
-        except TypeError, e:
-            print "Not a numpy array, brah. ExceptionL %s" % e         
-        
-        cv2.rectangle(frameName,(x,y), (x+w, y+h), (0, 0, 255), 2)
-        cv2.rectangle(frameName, (250, 120), (750, 450), (0, 255, 0), 2)
-        return
 
 
     def update_threshLims(self, dThreshUpdate):
@@ -197,21 +199,20 @@ class StaticVideo(Observer, Observable):
             Param1 (): Dictionary for threshold vals update.
         
         Returns:
-            None if successful. 
+            Dictionary {'ret','frame','firstFrame','threshFrame','cnts','displayFrame'}. 
 
         """
         ret, frame = self.capture.read()
         frame = imutils.resize(frame, width=1000)
-        
-        threshFrameDelta = self.__frame_delta_thresh__(frame, firstFrame)
-            
+                    
+        threshFrameDelta = frame_delta_thresh(self, frame, firstFrame, self.dThreshLims)
         firstFrame = threshFrameDelta['firstFrame']
         threshFrame = threshFrameDelta['thresh']
         cnts = [] 
         try: 
             # This state can occur on the first time through.
-            cnts = self.__frame_contour__(threshFrame)   
-            self.draw_rect(cnts, frame)
+            cnts = frame_contour(threshFrame)   
+            draw_rect(cnts, frame)
         except ValueError, e: 
             pass
 
