@@ -18,6 +18,7 @@ import ntpath
 import imutils
 import cv2
 
+import cutoutBgSubSwitcher
 from cutoutMessenger import Observer, Observable
 
 def frame_delta_thresh(videoPlayer, frame, firstFrame, dThreshLims):
@@ -40,10 +41,15 @@ def frame_delta_thresh(videoPlayer, frame, firstFrame, dThreshLims):
        
     # Diff the first and last frame then apply MOG2 algorithm.
     frameDelta = cv2.absdiff(firstFrame, gray)     
-    thresh = videoPlayer.fgroundBground.apply(gray) 
-    
+
+
+    # This is where we will make our bg subtractor calls/
+  
+    #thresh = videoPlayer.fgroundBground.apply(gray) 
+    thresh = cutoutBgSubSwitcher.apply_bg_subtract(gray) 
+
     #20170306 - These may be useful in different lighting, causing problems now
-    try:
+    """try:
         #Set a threshold floor then apply adaptive threshold from cv2
         thresh = cv2.threshold(frameDelta, dThreshLims['thresholdFloor'], 
                                            dThreshLims['threshMax'], 
@@ -54,6 +60,7 @@ def frame_delta_thresh(videoPlayer, frame, firstFrame, dThreshLims):
     except KeyError, e:
         print "Missing keys, brah. Exception: %s" % e
 
+    """
     # Return a dict with frame related info.
     return {'frameDelta': frameDelta, 'thresh': thresh, 'firstFrame': firstFrame}
 
@@ -135,7 +142,8 @@ class StaticVideo(Observer, Observable):
         self.camView = 0
         self.capture = cv2.VideoCapture(fullVidName) 
 
-        self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
+        #self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
+        setattr(cutoutBgSubSwitcher, "bgSubtractAlg", "mog2") 
         self.dThreshLims = {'thresholdFloor': 0, 'threshMax': 255, 'threshAdaptiveMax': 255}
 
 
