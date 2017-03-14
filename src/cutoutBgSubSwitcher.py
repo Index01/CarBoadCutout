@@ -1,4 +1,9 @@
 
+""" Switch between different background subtraction algorithms
+
+OpenCv and other vision tools support a varity of background subtraction algorithms
+which is an important part in isolation regions of interest. 
+"""
 
 import cv2
 
@@ -18,20 +23,14 @@ def apply_bg_subtract(frameIn):
     """
     bg = lambda x : x
     global sbtktBgInstance
-    print sbtktBgInstance
     outFrame = None
     try:
         bg = globals()[bgSubtractAlg]
     except KeyError, e:
         print "Sorry brah, unsupported algorithm. Exception: %s" % e
 
-    print "I'm here"
     outFrame = bg(frameIn)
 
-    print "frame in:"
-    print frameIn
-    print "outout:"
-    print outFrame 
     return outFrame
 
 
@@ -39,16 +38,20 @@ def mog():
     pass
 
 def mog2(frameIn):
+     """MOG2 algorithm.
+
+    Args:
+        Param1 (frame): Frame for openCV 
+    Returns:
+        outFrame of type cv.createBackgroundSubtractioMOG2.apply.         
+
+    """
     global sbtktBgInstance
-    print sbtktBgInstance 
     #sbtktBgInstanceMog2 = cv2.createBackgroundSubtractorMOG2()
     if not sbtktBgInstance:
         sbtktBgInstance =  cv2.createBackgroundSubtractorMOG2()
-        print "i'm somewhere I shouldn't beee."
 
     outFrame = sbtktBgInstance.apply(frameIn)
-    print "out from in" 
-    print outFrame
  
     return outFrame
 

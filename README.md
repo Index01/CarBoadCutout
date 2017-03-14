@@ -3,16 +3,14 @@
 
 # Car-board cutout
 
-#################################################################
 ### Under construction 
-#################################################################
 
-Find groups of moving pixels and draw a nice little box around them. Create a variety of filters for removing color channel data, include sliders for changing some of the paramaters to test lighting and filter conditions in relation to object detect or recognition. Many addtional steps need to be taken in order to improve the successful identification and contour resolution.
+Find groups of moving pixels and draw a nice little box around them. Create a variety of filters for removing color and algorithms for background subtraction, include sliders for changing some of the paramaters to test lighting and filter conditions in relation to object detection. Many addtional steps need to be taken in order to improve successful identification and contour resolution.
 
 
 
 # Get it started
-    pip 9.0.1, python2.7
+    virtualenv 1.11, pip 9.0.1, python2.7
 
 ## Real quick:
     > source [your/virtualenv/bin/activate]
@@ -32,6 +30,6 @@ If you do not have OpenCV installed and working prior to using this code, turn t
 
 
 Running the quick start should produce the depicted results.
-![alt text] (https://github.com/Index01/CarBoadCutout/blob/master/static/inContent/capture.png)
+![Alt text](https://github.com/Index01/CarBoadCutout/blob/master/static/inContent/capture.png "Out of the box results.")
 
   
