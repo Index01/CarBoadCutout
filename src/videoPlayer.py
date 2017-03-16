@@ -42,9 +42,7 @@ def frame_delta_thresh(videoPlayer, frame, firstFrame, dThreshLims):
     # Diff the first and last frame then apply MOG2 algorithm.
     frameDelta = cv2.absdiff(firstFrame, gray)     
 
-
     # This is where we will make our bg subtractor calls/
-  
     #thresh = videoPlayer.fgroundBground.apply(gray) 
     thresh = cutoutBgSubSwitcher.apply_bg_subtract(gray) 
 
@@ -143,7 +141,9 @@ class StaticVideo(Observer, Observable):
         self.capture = cv2.VideoCapture(fullVidName) 
 
         #self.fgroundBground = cv2.createBackgroundSubtractorMOG2()
-        setattr(cutoutBgSubSwitcher, "bgSubtractAlg", "mog2") 
+        #setattr(cutoutBgSubSwitcher, "bgSubtractAlg", "m3g2") 
+        cutoutBgSubSwitcher.select_bgSub_algorithm("mog2")
+
         self.dThreshLims = {'thresholdFloor': 0, 'threshMax': 255, 'threshAdaptiveMax': 255}
 
 
